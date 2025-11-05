@@ -1,0 +1,19 @@
+# Pinned to versions compatible with common global packages (langchain, llama-stack)
+# Key constraints: pydantic>=2.7.4,<3.0.0, pydantic-settings>=2.10.1, python-multipart>=0.0.20, fastapi>=0.115.0
+fastapi==0.115.12
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+pymysql==1.1.0
+cryptography==41.0.7
+python-dotenv==1.0.0
+# Use a pydantic release that satisfies langchain and other packages
+pydantic==2.12.3
+# pydantic-settings must be compatible with pydantic; choose a recent compatible release
+pydantic-settings==2.11.0
+# python-multipart version required by many packages
+python-multipart==0.0.20
+fastapi-cors==0.0.6
+# Required by langchain-google-genai (>=0.7)
+google-ai-generativelanguage>=0.7,<1
+
+pydantic[email]
