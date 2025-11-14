@@ -8,6 +8,7 @@ import Grievances from './pages/Grievances';
 import Departments from './pages/Departments';
 import QueriesDemo from './pages/QueriesDemo';
 import CustomQuery from './pages/CustomQuery';
+import DBTools from './pages/DBTools';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/departments" element={<Departments />} />
           <Route path="/queries" element={<QueriesDemo />} />
           <Route path="/custom-query" element={<CustomQuery />} />
+          <Route path="/db-tools" element={<DBTools />} />
         </Routes>
       </Layout>
     </Router>

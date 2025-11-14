@@ -42,6 +42,11 @@ export const updateServiceRequest = (id, data) => api.put(`/service-requests/${i
 export const updateServiceRequestStatus = (id, status) => api.patch(`/service-requests/${id}/status?status=${status}`);
 export const deleteServiceRequest = (id) => api.delete(`/service-requests/${id}`);
 
+// Payments APIs
+export const getPayments = (skip = 0, limit = 100) => api.get(`/payments?skip=${skip}&limit=${limit}`);
+export const getPayment = (id) => api.get(`/payments/${id}`);
+export const createPayment = (data) => api.post('/payments', data);
+
 // Grievances APIs
 export const getGrievances = (skip = 0, limit = 100) => api.get(`/grievances?skip=${skip}&limit=${limit}`);
 export const getGrievance = (id) => api.get(`/grievances/${id}`);
@@ -53,5 +58,18 @@ export const deleteGrievance = (id) => api.delete(`/grievances/${id}`);
 // Custom Query APIs
 export const executeCustomQuery = (query) => api.post('/custom-queries/execute', { query });
 export const getSampleQueries = () => api.get('/custom-queries/sample-queries');
+
+// DB Tools: procedures, functions and views (demo)
+export const getProcedureCitizenSummary = (citizen_id) => api.get(`/db/procedures/citizen_summary?citizen_id=${citizen_id}`);
+export const getProcedureDepartmentStats = (department_id) => api.get(`/db/procedures/department_stats?department_id=${department_id}`);
+export const postProcedureMarkGrievanceResolved = (grievance_id, resolved_by) => api.post('/db/procedures/mark_grievance_resolved', { grievance_id, resolved_by });
+
+export const getFunctionTotalPaid = (citizen_id) => api.get(`/db/functions/total_paid?citizen_id=${citizen_id}`);
+export const getFunctionCountRequests = (citizen_id) => api.get(`/db/functions/count_requests?citizen_id=${citizen_id}`);
+export const getFunctionAvgPayment = (service_id) => api.get(`/db/functions/avg_payment?service_id=${service_id}`);
+export const getFunctionOpenGrievances = (department_id) => api.get(`/db/functions/open_grievances?department_id=${department_id}`);
+export const getFunctionIsCitizenActive = (citizen_id) => api.get(`/db/functions/is_citizen_active?citizen_id=${citizen_id}`);
+
+export const getView = (viewName) => api.get(`/db/views/${encodeURIComponent(viewName)}`);
 
 export default api;

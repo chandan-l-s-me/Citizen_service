@@ -18,12 +18,12 @@ const Grievances = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingGrievance, setEditingGrievance] = useState(null);
   const [filter, setFilter] = useState('All');
+  const [searchId, setSearchId] = useState('');
   const [formData, setFormData] = useState({
     Citizen_ID: '',
     Department_ID: '',
     Description: '',
-    Status: 'Submitted',
-    Date: new Date().toISOString().split('T')[0]
+    Status: 'Submitted'
   });
 
   useEffect(() => {
@@ -37,9 +37,25 @@ const Grievances = () => {
         getDepartments(),
         getCitizens()
       ]);
-      setGrievances(grievancesRes.data);
-      setDepartments(deptsRes.data);
-      setCitizens(citizensRes.data);
+      console.debug('fetchData grievances response:', grievancesRes);
+
+      // Defensive: handle different response shapes
+      const grievancesData = Array.isArray(grievancesRes.data)
+        ? grievancesRes.data
+        : (grievancesRes.data && (grievancesRes.data.data || grievancesRes.data.rows)) || [];
+
+      const deptsData = Array.isArray(deptsRes.data)
+        ? deptsRes.data
+        : (deptsRes.data && (deptsRes.data.data || deptsRes.data.rows)) || [];
+
+      const citizensData = Array.isArray(citizensRes.data)
+        ? citizensRes.data
+        : (citizensRes.data && (citizensRes.data.data || citizensRes.data.rows)) || [];
+
+      console.debug('Setting grievances state with:', grievancesData);
+      setGrievances(grievancesData);
+      setDepartments(deptsData);
+      setCitizens(citizensData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -58,16 +74,23 @@ const Grievances = () => {
 
       if (editingGrievance) {
         await updateGrievance(editingGrievance.Grievance_ID, grievanceData);
+        setShowModal(false);
+        resetForm();
+        fetchData();
       } else {
-        await createGrievance(grievanceData);
+        const res = await createGrievance(grievanceData);
+        console.debug('createGrievance full response:', res);
+        console.debug('createGrievance res.data:', res.data);
+        
+        setShowModal(false);
+        resetForm();
+        
+        // Fetch fresh data from server to ensure newest-first ordering
+        await fetchData();
       }
-
-      setShowModal(false);
-      resetForm();
-      fetchData();
     } catch (error) {
       console.error('Error saving grievance:', error);
-      alert('Error saving grievance');
+      alert('Error saving grievance: ' + (error.response?.data?.detail || error.message));
     }
   };
 
@@ -77,8 +100,7 @@ const Grievances = () => {
       Citizen_ID: grievance.Citizen_ID,
       Department_ID: grievance.Department_ID,
       Description: grievance.Description,
-      Status: grievance.Status,
-      Date: grievance.Date
+      Status: grievance.Status
     });
     setShowModal(true);
   };
@@ -110,8 +132,7 @@ const Grievances = () => {
       Citizen_ID: '',
       Department_ID: '',
       Description: '',
-      Status: 'Submitted',
-      Date: new Date().toISOString().split('T')[0]
+      Status: 'Submitted'
     });
     setEditingGrievance(null);
   };
@@ -139,6 +160,13 @@ const Grievances = () => {
   const filteredGrievances = filter === 'All' 
     ? grievances 
     : grievances.filter(g => g.Status === filter);
+
+  // Apply search filter by ID
+  const searchedGrievances = searchId.trim() === ''
+    ? filteredGrievances
+    : filteredGrievances.filter(g => 
+        g.Grievance_ID.toString().includes(searchId.trim())
+      );
 
   const statusCounts = {
     All: grievances.length,
@@ -194,9 +222,34 @@ const Grievances = () => {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="card">
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium text-gray-700">Search by ID:</label>
+          <input
+            type="text"
+            placeholder="Enter Grievance ID"
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            className="input-field flex-1 max-w-xs"
+          />
+          {searchId && (
+            <button
+              onClick={() => setSearchId('')}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Clear
+            </button>
+          )}
+          <span className="text-sm text-gray-500">
+            Showing {searchedGrievances.length} of {filteredGrievances.length} grievances
+          </span>
+        </div>
+      </div>
+
       {/* Grievances List */}
       <div className="grid grid-cols-1 gap-4">
-        {filteredGrievances.map((grievance) => (
+        {searchedGrievances.map((grievance) => (
           <div key={grievance.Grievance_ID} className="card hover:shadow-xl transition-shadow">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -274,10 +327,12 @@ const Grievances = () => {
         ))}
       </div>
 
-      {filteredGrievances.length === 0 && (
+      {searchedGrievances.length === 0 && (
         <div className="card text-center py-12">
           <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No grievances found</p>
+          <p className="text-gray-600">
+            {searchId ? `No grievances found with ID containing "${searchId}"` : 'No grievances found'}
+          </p>
         </div>
       )}
 
@@ -355,16 +410,6 @@ const Grievances = () => {
                   <option value="Resolved">Resolved</option>
                   <option value="Closed">Closed</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                <input
-                  type="date"
-                  required
-                  value={formData.Date}
-                  onChange={(e) => setFormData({ ...formData, Date: e.target.value })}
-                  className="input-field"
-                />
               </div>
               <div className="flex space-x-3 pt-4">
                 <button type="submit" className="btn-primary flex-1">

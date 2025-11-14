@@ -51,7 +51,7 @@ class Service(ServiceBase):
 # Payment Schemas
 class PaymentBase(BaseModel):
     Amount: float
-    Payment_Date: date
+    Payment_Date: Optional[date] = None  # Optional so DB trigger can set default
     Payment_Method: str
     Status: str
 
@@ -66,9 +66,11 @@ class Payment(PaymentBase):
 
 # Service Request Schemas
 class ServiceRequestBase(BaseModel):
-    Citizen_ID: int
+    # Citizen_ID may be NULL in the DB for historical or orphaned requests,
+    # so accept None here to avoid response validation errors.
+    Citizen_ID: Optional[int] = None
     Service_ID: int
-    Request_Date: date
+    Request_Date: Optional[date] = None  # Optional so DB trigger can set it
     Status: str
     Payment_ID: Optional[int] = None
 
@@ -83,11 +85,11 @@ class ServiceRequest(ServiceRequestBase):
 
 # Grievance Schemas
 class GrievanceBase(BaseModel):
-    Citizen_ID: int
-    Department_ID: int
+    Citizen_ID: Optional[int] = None  # Optional in case of orphaned grievances
+    Department_ID: Optional[int] = None  # Optional in case department is deleted
     Description: str
     Status: str
-    Date: date
+    Date: Optional[date] = None  # Optional so DB can set it automatically
 
 class GrievanceCreate(GrievanceBase):
     pass

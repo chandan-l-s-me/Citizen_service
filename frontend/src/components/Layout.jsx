@@ -12,7 +12,8 @@ import {
   Bell,
   Search,
   Database,
-  Code
+  Code,
+  Wrench
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -26,8 +27,9 @@ const Layout = ({ children }) => {
     { name: 'Service Requests', href: '/service-requests', icon: FileText },
     { name: 'Grievances', href: '/grievances', icon: MessageSquare },
     { name: 'Departments', href: '/departments', icon: Building2 },
-    { name: 'SQL Queries', href: '/queries', icon: Database },
-    { name: 'Custom Query', href: '/custom-query', icon: Code },
+  { name: 'SQL Queries', href: '/queries', icon: Database },
+  { name: 'Custom Query', href: '/custom-query', icon: Code },
+  { name: 'DB Tools', href: '/db-tools', icon: Wrench },
   ];
 
   const isActive = (path) => location.pathname === path;

@@ -23,6 +23,7 @@ const Citizens = () => {
   const fetchCitizens = async () => {
     try {
       const response = await getCitizens();
+      console.debug('fetchCitizens response:', response);
       setCitizens(response.data);
     } catch (error) {
       console.error('Error fetching citizens:', error);
@@ -37,10 +38,15 @@ const Citizens = () => {
       if (editingCitizen) {
         await updateCitizen(editingCitizen.Citizen_ID, formData);
       } else {
-        await createCitizen(formData);
+        const res = await createCitizen(formData);
+        // Optimistically add the created citizen to the list so the UI updates immediately.
+        if (res && res.data) {
+          setCitizens((prev) => [res.data, ...prev]);
+        }
       }
       setShowModal(false);
       resetForm();
+      // Refresh list to ensure server-side state and any ordering is reflected
       fetchCitizens();
     } catch (error) {
       console.error('Error saving citizen:', error);

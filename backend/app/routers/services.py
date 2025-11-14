@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from typing import List
 from app.database import get_db
 from app.models.service import Service as ServiceModel
@@ -53,7 +53,7 @@ def delete_service(service_id: int, db: Session = Depends(get_db)):
     db_service = db.query(ServiceModel).filter(ServiceModel.Service_ID == service_id).first()
     if db_service is None:
         raise HTTPException(status_code=404, detail="Service not found")
-    
+    # Delete the service (DB triggers will cascade to related requests/payments)
     db.delete(db_service)
     db.commit()
-    return {"message": "Service deleted successfully"}
+    return {"message": "Service deleted successfully (related records handled by DB triggers)"}

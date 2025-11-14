@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import citizens, departments, services, dashboard, service_requests, grievances, custom_queries
+from app.routers import citizens, departments, services, dashboard, service_requests, grievances, custom_queries, payments
+from app.routers import db_tools
+from app.routers import payments
 import os
 from dotenv import load_dotenv
 
@@ -31,6 +33,8 @@ app.include_router(service_requests.router, prefix="/api")
 app.include_router(grievances.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(custom_queries.router, prefix="/api")
+app.include_router(payments.router, prefix="/api")
+app.include_router(db_tools.router, prefix="/api")
 
 @app.get("/")
 def read_root():

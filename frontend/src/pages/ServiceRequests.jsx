@@ -7,6 +7,7 @@ import {
   updateServiceRequestStatus,
   deleteServiceRequest,
   getCitizens,
+  createPayment,
   getServices
 } from '../api/api';
 
@@ -21,9 +22,13 @@ const ServiceRequests = () => {
   const [formData, setFormData] = useState({
     Citizen_ID: '',
     Service_ID: '',
-    Request_Date: new Date().toISOString().split('T')[0],
     Status: 'Pending',
-    Payment_ID: ''
+    Payment_ID: '',
+    // Optional inline payment creation fields
+    createPayment: false,
+    Payment_Amount: '',
+    Payment_Method: 'Online',
+    Payment_Status: 'Completed'
   });
 
   useEffect(() => {
@@ -37,9 +42,24 @@ const ServiceRequests = () => {
         getCitizens(),
         getServices()
       ]);
-      setRequests(requestsRes.data);
-      setCitizens(citizensRes.data);
-      setServices(servicesRes.data);
+      console.debug('serviceRequests APIs:', { requestsRes, citizensRes, servicesRes });
+
+      // Defensive: some responses may wrap data in .data or .rows depending on server/client
+      const requestsData = Array.isArray(requestsRes.data)
+        ? requestsRes.data
+        : (requestsRes.data && (requestsRes.data.data || requestsRes.data.rows)) || [];
+
+      const citizensData = Array.isArray(citizensRes.data)
+        ? citizensRes.data
+        : (citizensRes.data && (citizensRes.data.data || citizensRes.data.rows)) || [];
+
+      const servicesData = Array.isArray(servicesRes.data)
+        ? servicesRes.data
+        : (servicesRes.data && (servicesRes.data.data || servicesRes.data.rows)) || [];
+
+      setRequests(requestsData);
+      setCitizens(citizensData);
+      setServices(servicesData);
     } catch (error) {
       console.error('Error fetching requests:', error);
     } finally {
@@ -50,11 +70,27 @@ const ServiceRequests = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // If user chose to create a payment inline, create it first and use returned Payment_ID
+      let paymentIdToUse = null;
+      if (formData.createPayment) {
+        const paymentPayload = {
+          Amount: parseFloat(formData.Payment_Amount) || 0,
+          Payment_Date: null, // DB trigger will set default if null
+          Payment_Method: formData.Payment_Method,
+          Status: formData.Payment_Status
+        };
+        const paymentRes = await createPayment(paymentPayload);
+        paymentIdToUse = paymentRes.data.Payment_ID || paymentRes.data.PaymentId || paymentRes.data.PaymentID || paymentRes.data.id;
+      } else if (formData.Payment_ID) {
+        paymentIdToUse = parseInt(formData.Payment_ID);
+      }
+
       const requestData = {
-        ...formData,
         Citizen_ID: parseInt(formData.Citizen_ID),
         Service_ID: parseInt(formData.Service_ID),
-        Payment_ID: formData.Payment_ID ? parseInt(formData.Payment_ID) : null
+        Request_Date: null, // DB trigger will set this automatically
+        Status: formData.Status,
+        Payment_ID: paymentIdToUse
       };
 
       if (editingRequest) {
@@ -77,9 +113,12 @@ const ServiceRequests = () => {
     setFormData({
       Citizen_ID: request.Citizen_ID,
       Service_ID: request.Service_ID,
-      Request_Date: request.Request_Date,
       Status: request.Status,
-      Payment_ID: request.Payment_ID || ''
+      Payment_ID: request.Payment_ID || '',
+      createPayment: false,
+      Payment_Amount: '',
+      Payment_Method: 'Online',
+      Payment_Status: 'Completed'
     });
     setShowModal(true);
   };
@@ -110,9 +149,12 @@ const ServiceRequests = () => {
     setFormData({
       Citizen_ID: '',
       Service_ID: '',
-      Request_Date: new Date().toISOString().split('T')[0],
       Status: 'Pending',
-      Payment_ID: ''
+      Payment_ID: '',
+      createPayment: false,
+      Payment_Amount: '',
+      Payment_Method: 'Online',
+      Payment_Status: 'Completed'
     });
     setEditingRequest(null);
   };
@@ -327,18 +369,6 @@ const ServiceRequests = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Request Date *
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={formData.Request_Date}
-                  onChange={(e) => setFormData({ ...formData, Request_Date: e.target.value })}
-                  className="input-field"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Status *
                 </label>
                 <select
@@ -362,8 +392,58 @@ const ServiceRequests = () => {
                   value={formData.Payment_ID}
                   onChange={(e) => setFormData({ ...formData, Payment_ID: e.target.value })}
                   className="input-field"
-                  placeholder="Enter payment ID if available"
+                  placeholder="Enter existing payment ID if available"
                 />
+                <p className="text-xs text-gray-500 mt-1">If you don't have a Payment ID, you can create one inline below.</p>
+              </div>
+
+              {/* Inline Payment Creation */}
+              <div className="pt-4 border-t border-gray-100">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.createPayment}
+                    onChange={(e) => setFormData({ ...formData, createPayment: e.target.checked })}
+                  />
+                  <span className="text-sm font-medium text-gray-700">Create payment now</span>
+                </label>
+
+                {formData.createPayment && (
+                  <div className="grid grid-cols-1 gap-3 mt-3">
+                    <div>
+                      <label className="block text-sm text-gray-500">Amount</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.Payment_Amount}
+                        onChange={(e) => setFormData({ ...formData, Payment_Amount: e.target.value })}
+                        className="input-field"
+                        placeholder="Amount"
+                        required={formData.createPayment}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-500">Method</label>
+                      <input
+                        type="text"
+                        value={formData.Payment_Method}
+                        onChange={(e) => setFormData({ ...formData, Payment_Method: e.target.value })}
+                        className="input-field"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-500">Status</label>
+                      <select
+                        value={formData.Payment_Status}
+                        onChange={(e) => setFormData({ ...formData, Payment_Status: e.target.value })}
+                        className="input-field"
+                      >
+                        <option value="Completed">Completed</option>
+                        <option value="Pending">Pending</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex space-x-3 pt-4">
                 <button type="submit" className="btn-primary flex-1">

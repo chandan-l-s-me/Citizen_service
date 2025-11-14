@@ -11,7 +11,13 @@ router = APIRouter(prefix="/grievances", tags=["grievances"])
 @router.get("/", response_model=List[Grievance])
 def get_grievances(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """Get all grievances"""
-    return db.query(GrievanceModel).offset(skip).limit(limit).all()
+    return (
+        db.query(GrievanceModel)
+        .order_by(GrievanceModel.Grievance_ID.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 @router.get("/{grievance_id}", response_model=Grievance)
 def get_grievance(grievance_id: int, db: Session = Depends(get_db)):
