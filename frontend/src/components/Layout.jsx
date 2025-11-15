@@ -29,7 +29,7 @@ const Layout = ({ children }) => {
     { name: 'Departments', href: '/departments', icon: Building2 },
   { name: 'SQL Queries', href: '/queries', icon: Database },
   { name: 'Custom Query', href: '/custom-query', icon: Code },
-  { name: 'DB Tools', href: '/db-tools', icon: Wrench },
+  { name: 'Summary & analysis', href: '/db-tools', icon: Wrench },
   ];
 
   const isActive = (path) => location.pathname === path;

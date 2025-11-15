@@ -61,16 +61,10 @@ export default function DBTools() {
         <h1 className="text-3xl font-bold text-gray-900">Database Tools Demo</h1>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-800">
-          This page demonstrates stored procedures, functions, and views in the database.
-          Use the buttons below to call backend endpoints that execute database routines.
-        </p>
-      </div>
 
       {/* Stored Procedures Section */}
       <div className="bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Stored Procedures</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Summary & Analysis</h2>
         
         <div className="space-y-4">
           {/* Citizen Summary */}
@@ -150,7 +144,7 @@ export default function DBTools() {
 
       {/* Functions Section */}
       <div className="bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Stored Functions</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Funcionalities</h2>
         
         <div className="space-y-4">
           {/* Total Paid by Citizen */}

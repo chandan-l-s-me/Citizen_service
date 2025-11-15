@@ -2,9 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import BaseModel
 from app.database import get_db
 
 router = APIRouter(prefix="/db", tags=["db-tools"])
+
+
+class MarkGrievanceResolvedRequest(BaseModel):
+    grievance_id: int
+    resolved_by: str
 
 
 @router.get("/procedures/citizen_summary")
@@ -28,11 +34,11 @@ def call_sp_get_department_stats(department_id: int, db: Session = Depends(get_d
 
 
 @router.post("/procedures/mark_grievance_resolved")
-def call_sp_mark_grievance_resolved(grievance_id: int, resolved_by: str, db: Session = Depends(get_db)):
+def call_sp_mark_grievance_resolved(request: MarkGrievanceResolvedRequest, db: Session = Depends(get_db)):
     try:
-        db.execute(text("CALL sp_mark_grievance_resolved(:gid, :by)"), {"gid": grievance_id, "by": resolved_by})
+        db.execute(text("CALL sp_mark_grievance_resolved(:gid, :by)"), {"gid": request.grievance_id, "by": request.resolved_by})
         db.commit()
-        return {"message": "Grievance marked resolved"}
+        return {"message": "Grievance marked resolved", "grievance_id": request.grievance_id}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
@@ -90,6 +96,7 @@ ALLOWED_VIEWS = {
     "view_total_paid_per_citizen": "SELECT * FROM view_total_paid_per_citizen",
     "view_request_counts_per_service": "SELECT * FROM view_request_counts_per_service",
     "view_open_grievances_per_department": "SELECT * FROM view_open_grievances_per_department",
+    "view_recent_requests": "SELECT * FROM view_recent_requests",
 }
 
 
